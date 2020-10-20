@@ -7,22 +7,44 @@
 // The MQTT topics that this device should publish/subscribe
 #define AWS_IOT_PUBLISH_TOPIC   "esp32/pub"
 #define AWS_IOT_SUBSCRIBE_TOPIC "esp32/sub"
+String strPUB = String(AWS_IOT_PUBLISH_TOPIC);
+String strSUB = String(AWS_IOT_SUBSCRIBE_TOPIC);
+
+
+//Strings
+String WIFI_SSID_S;
+int lenSSID = strlen(WIFI_SSID); 
 
 WiFiClientSecure net = WiFiClientSecure();
 MQTTClient client = MQTTClient(256);
+String strTHINGNAME = String(THINGNAME);
+String strWIFI_SSID = String(WIFI_SSID);
+
+//Convert Char to strings
+void prepstr(){
+  Serial.print(lenSSID);
+  while (Serial.available() > 0){
+    WIFI_SSID_S = Serial.readString();
+  }
+  Serial.print(WIFI_SSID_S);
+  Serial.println(WIFI_SSID);
+  Serial.print(strlen(WIFI_SSID));
+}
+
 
 void connectAWS()
 {
+
   Serial.print('\n'); 
-  Serial.println("Connectiong to AWS!");
+  Serial.println(strTHINGNAME + " is connectiong to AWS: using WIFI.mode. SSID is: " + strWIFI_SSID);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  Serial.println("Connecting to Wi-Fi");
+  Serial.println(" Connecting to Wi-Fi");
 
   while (WiFi.status() != WL_CONNECTED){
     delay(500);
-    Serial.print(".");
+    Serial.print(".!WiFi.");
   }
 
   // Configure WiFiClientSecure to use the AWS IoT device credentials
@@ -36,22 +58,23 @@ void connectAWS()
   // Create a message handler
   client.onMessage(messageHandler);
 
-  Serial.print("Connecting to AWS IOT");
+  Serial.print(" Connecting to AWS IOT");
 
   while (!client.connect(THINGNAME)) {
-    Serial.print(".");
+    Serial.print(".+C+.");
     delay(100);
   }
 
   if(!client.connected()){
-    Serial.println("AWS IoT Timeout!");
+    Serial.println();
+    Serial.println(" AWS IoT Timeout!");
     return;
   }
 
   // Subscribe to a topic
   client.subscribe(AWS_IOT_SUBSCRIBE_TOPIC);
-
-  Serial.println("AWS IoT Connected!");
+  Serial.println();
+  Serial.println(" AWS IoT Connected to topics: " + strPUB + " and " + strSUB + ".");
 }
 
 void publishMessage()
@@ -66,7 +89,7 @@ void publishMessage()
 }
 
 void messageHandler(String &topic, String &payload) {
-  Serial.println("incoming: " + topic + " - " + payload);
+  Serial.println("incoming: " + topic + " - " + payload + " - " + strTHINGNAME);
 
 //  StaticJsonDocument<200> doc;
 //  deserializeJson(doc, payload);
